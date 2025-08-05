@@ -10,7 +10,8 @@
 #include <memory>
 #include <functional>
 #include <thread>
-#include <atomic>
+#include <mutex>
+#include <shared_mutex>
 #include <queue>
 
 namespace fasttrade::core {

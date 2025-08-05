@@ -1,0 +1,164 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 16,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "default",
+            "displayName": "Default Configuration",
+            "description": "Default build configuration with all features enabled",
+            "binaryDir": "${sourceDir}/build/default",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "BUILD_EXAMPLES": "ON",
+                "BUILD_TESTS": "ON",
+                "BUILD_PYTHON_BINDINGS": "OFF"
+            }
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug Build",
+            "description": "Debug build with optimizations disabled and debug symbols",
+            "binaryDir": "${sourceDir}/build/debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_EXAMPLES": "ON",
+                "BUILD_TESTS": "ON",
+                "BUILD_PYTHON_BINDINGS": "OFF",
+                "CMAKE_CXX_FLAGS": "-g -O0 -Wall -Wextra -Wpedantic"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Release Build",
+            "description": "Optimized release build for production",
+            "binaryDir": "${sourceDir}/build/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "BUILD_EXAMPLES": "ON",
+                "BUILD_TESTS": "OFF",
+                "BUILD_PYTHON_BINDINGS": "OFF",
+                "CMAKE_CXX_FLAGS": "-O3 -DNDEBUG -march=native"
+            }
+        },
+        {
+            "name": "testing",
+            "displayName": "Testing Configuration",
+            "description": "Configuration optimized for testing and coverage",
+            "binaryDir": "${sourceDir}/build/testing",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_EXAMPLES": "OFF",
+                "BUILD_TESTS": "ON",
+                "BUILD_PYTHON_BINDINGS": "OFF",
+                "CMAKE_CXX_FLAGS": "-g -O0 --coverage -fprofile-arcs -ftest-coverage"
+            }
+        },
+        {
+            "name": "performance",
+            "displayName": "High Performance Build",
+            "description": "Maximum performance build for benchmarking",
+            "binaryDir": "${sourceDir}/build/performance",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "BUILD_EXAMPLES": "ON",
+                "BUILD_TESTS": "OFF",
+                "BUILD_PYTHON_BINDINGS": "OFF",
+                "CMAKE_CXX_FLAGS": "-O3 -DNDEBUG -march=native -mtune=native -flto"
+            }
+        },
+        {
+            "name": "python",
+            "displayName": "Python Bindings Build",
+            "description": "Build with Python bindings enabled",
+            "binaryDir": "${sourceDir}/build/python",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "BUILD_EXAMPLES": "ON",
+                "BUILD_TESTS": "ON",
+                "BUILD_PYTHON_BINDINGS": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "default",
+            "displayName": "Build Default",
+            "configurePreset": "default",
+            "jobs": 0
+        },
+        {
+            "name": "debug",
+            "displayName": "Build Debug",
+            "configurePreset": "debug",
+            "jobs": 0
+        },
+        {
+            "name": "release",
+            "displayName": "Build Release",
+            "configurePreset": "release",
+            "jobs": 0
+        },
+        {
+            "name": "testing",
+            "displayName": "Build Testing",
+            "configurePreset": "testing",
+            "jobs": 0
+        },
+        {
+            "name": "performance",
+            "displayName": "Build Performance",
+            "configurePreset": "performance",
+            "jobs": 0
+        },
+        {
+            "name": "python",
+            "displayName": "Build Python",
+            "configurePreset": "python",
+            "jobs": 0
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "default",
+            "displayName": "Default Tests",
+            "configurePreset": "default",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error",
+                "stopOnFailure": true
+            }
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug Tests",
+            "configurePreset": "debug",
+            "output": {
+                "outputOnFailure": true,
+                "verbosity": "verbose"
+            },
+            "execution": {
+                "noTestsAction": "error",
+                "stopOnFailure": false
+            }
+        },
+        {
+            "name": "testing",
+            "displayName": "Testing Suite",
+            "configurePreset": "testing",
+            "output": {
+                "outputOnFailure": true,
+                "verbosity": "verbose"
+            },
+            "execution": {
+                "noTestsAction": "error",
+                "stopOnFailure": false
+            }
+        }
+    ]
+}

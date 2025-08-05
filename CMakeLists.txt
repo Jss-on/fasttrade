@@ -13,11 +13,16 @@ option(BUILD_EXAMPLES "Build examples" ON)
 # Find required packages
 find_package(Threads REQUIRED)
 
+# Try to find nlohmann_json
+find_package(nlohmann_json REQUIRED)
+
+
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Create fasttrade library
 set(FASTTRADE_SOURCES
+    src/fasttrade.cpp
     src/core/order_book.cpp
     src/core/trading_core.cpp
     src/core/limit_order.cpp
@@ -40,7 +45,7 @@ target_include_directories(fasttrade PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(fasttrade Threads::Threads)
+target_link_libraries(fasttrade Threads::Threads nlohmann_json::nlohmann_json)
 
 # Compiler flags for optimization
 target_compile_options(fasttrade PRIVATE
@@ -48,15 +53,15 @@ target_compile_options(fasttrade PRIVATE
     $<$<CONFIG:Debug>:-g -O0>
 )
 
-# # Python bindings
-# if(BUILD_PYTHON_BINDINGS)
-#     find_package(pybind11 QUIET)
-#     if(pybind11_FOUND)
-#         pybind11_add_module(pyfasttrade src/python/bindings.cpp)
-#         target_link_libraries(pyfasttrade PRIVATE fasttrade)
-#         target_compile_definitions(pyfasttrade PRIVATE VERSION_INFO=${PROJECT_VERSION})
-#     endif()
-# endif()
+# Python bindings
+if(BUILD_PYTHON_BINDINGS)
+    find_package(pybind11 QUIET)
+    if(pybind11_FOUND)
+        pybind11_add_module(pyfasttrade src/python/bindings.cpp)
+        target_link_libraries(pyfasttrade PRIVATE fasttrade)
+        target_compile_definitions(pyfasttrade PRIVATE VERSION_INFO=${PROJECT_VERSION})
+    endif()
+endif()
 
 # Examples
 if(BUILD_EXAMPLES)

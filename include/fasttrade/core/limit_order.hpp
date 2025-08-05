@@ -4,8 +4,33 @@
 #include "../utils/decimal.hpp"
 #include <string>
 #include <memory>
+#include <optional>
+#include <vector>
+#include <nlohmann/json.hpp>
 
 namespace fasttrade::core {
+
+/**
+ * @brief Execution detail for tracking partial fills
+ */
+struct ExecutionDetail {
+    std::string execution_id;
+    utils::Decimal quantity;
+    utils::Decimal price;
+    utils::Decimal fee_amount;
+    std::string fee_currency;
+    Timestamp timestamp;
+    
+    ExecutionDetail() = default;
+    ExecutionDetail(std::string exec_id, const utils::Decimal& qty, const utils::Decimal& px,
+                   const utils::Decimal& fee = utils::Decimal::zero(), 
+                   std::string fee_cur = "")
+        : execution_id(std::move(exec_id)), quantity(qty), price(px), 
+          fee_amount(fee), fee_currency(std::move(fee_cur)), timestamp(GlobalClock::now()) {}
+    
+    nlohmann::json to_json() const;
+    static ExecutionDetail from_json(const nlohmann::json& j);
+};
 
 /**
  * @brief Order side enumeration
@@ -60,6 +85,9 @@ private:
     OrderStatus status_;
     std::string position_;
     std::string exchange_order_id_;
+    std::vector<ExecutionDetail> executions_;
+    std::optional<std::string> rejection_reason_;
+    std::optional<Timestamp> expiry_time_;
 
 public:
     /**
@@ -156,17 +184,86 @@ public:
     std::string to_string() const;
 
     /**
+     * @brief Convert order to JSON object
+     * @return nlohmann::json object
+     */
+    nlohmann::json to_json() const;
+
+    /**
      * @brief Convert order to JSON string for serialization
      * @return JSON string
      */
-    std::string to_json() const;
+    std::string to_json_string() const;
+
+    /**
+     * @brief Create order from JSON object
+     * @param json_obj JSON object
+     * @return LimitOrder object
+     */
+    static LimitOrder from_json(const nlohmann::json& json_obj);
 
     /**
      * @brief Create order from JSON string
-     * @param json JSON string representation
+     * @param json_str JSON string representation
      * @return LimitOrder object
      */
-    static LimitOrder from_json(const std::string& json);
+    static LimitOrder from_json_string(const std::string& json_str);
+
+    /**
+     * @brief Validate order data
+     * @return True if order is valid, false otherwise
+     */
+    bool is_valid() const;
+
+    /**
+     * @brief Get order age in milliseconds
+     * @return Age in milliseconds since creation
+     */
+    int64_t age_ms() const;
+
+    /**
+     * @brief Get time since last update in milliseconds
+     * @return Time since last update in milliseconds
+     */
+    int64_t time_since_last_update_ms() const;
+
+    /**
+     * @brief Add execution details
+     * @param execution_id Unique execution ID
+     * @param quantity Executed quantity
+     * @param price Execution price
+     * @param fee_amount Fee charged
+     * @param fee_currency Fee currency
+     */
+    void add_execution(const std::string& execution_id,
+                      const utils::Decimal& quantity,
+                      const utils::Decimal& price,
+                      const utils::Decimal& fee_amount = utils::Decimal::zero(),
+                      const std::string& fee_currency = "");
+
+    /**
+     * @brief Get all executions for this order
+     * @return Vector of execution details
+     */
+    const std::vector<ExecutionDetail>& get_executions() const { return executions_; }
+
+    /**
+     * @brief Get total executed value
+     * @return Total value executed
+     */
+    utils::Decimal get_executed_value() const;
+
+    /**
+     * @brief Get average execution price
+     * @return Average execution price
+     */
+    utils::Decimal get_average_execution_price() const;
+
+    /**
+     * @brief Get total fees paid
+     * @return Total fees in quote currency
+     */
+    utils::Decimal get_total_fees() const;
 };
 
 /**

@@ -81,20 +81,69 @@ FastTrade is built with a modular, layered architecture:
 
 ### Build Instructions
 
+FastTrade uses **CMake Presets** for streamlined building and testing across different configurations.
+
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/fasttrade.git
+git clone https://github.com/Jss-on/fasttrade.git
 cd fasttrade
+```
 
-# Create build directory
-mkdir build && cd build
+#### 🔧 **Available Build Presets**
 
-# Configure and build
-cmake ..
-make -j$(nproc)
+| Preset | Description | Use Case |
+|--------|-------------|----------|
+| `default` | Balanced build with debug info | Development & testing |
+| `debug` | Full debug build with warnings | Debugging & development |
+| `release` | Optimized production build | Deployment |
+| `testing` | Debug build with coverage | Unit testing & CI |
+| `performance` | Maximum optimization | Benchmarking |
+| `python` | Build with Python bindings | Python integration |
+
+#### 🚀 **Quick Build (Recommended)**
+
+```bash
+# Configure with default preset
+cmake --preset=default
+
+# Build with default preset
+cmake --build --preset=default
 
 # Run examples
-./examples/basic_trading_example
+./build/default/examples/basic_trading_example
+```
+
+#### 🐛 **Development Build**
+
+```bash
+# For development with full debugging
+cmake --preset=debug
+cmake --build --preset=debug
+```
+
+#### 🚀 **Production Build**
+
+```bash
+# For optimized production deployment
+cmake --preset=release
+cmake --build --preset=release
+```
+
+#### 🧪 **Testing Build**
+
+```bash
+# For running tests with coverage
+cmake --preset=testing
+cmake --build --preset=testing
+ctest --preset=testing
+```
+
+#### ⚡ **Performance Build**
+
+```bash
+# For maximum performance benchmarking
+cmake --preset=performance
+cmake --build --preset=performance
 ```
 
 ### Your First Trading Program

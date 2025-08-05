@@ -3,6 +3,7 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <random>
 
 using namespace fasttrade::core;
 using namespace fasttrade::utils;
@@ -43,7 +44,7 @@ int main() {
         orders_cancelled++;
     };
     
-    callbacks.on_trade_executed = [](const Trade& trade) {
+    callbacks.on_trade_executed = [&orders_filled](const Trade& trade) {
         // Log critical trade information only
         if (orders_filled % 100 == 0) {  // Log every 100th trade
             std::cout << "⚡ HFT Trade #" << orders_filled << ": " 

@@ -66,6 +66,10 @@ public:
         return *this;
     }
 
+    Decimal operator-() const {
+        return Decimal(-value_);
+    }
+
     // Comparison operators
     bool operator==(const Decimal& other) const { return value_ == other.value_; }
     bool operator!=(const Decimal& other) const { return value_ != other.value_; }

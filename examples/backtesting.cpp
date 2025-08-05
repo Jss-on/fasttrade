@@ -64,7 +64,7 @@ int main() {
             for (int j = 0; j < short_period; ++j) {
                 sum_short += historical_prices[i - j];
             }
-            sma_short.push_back(sum_short / Decimal(short_period));
+            sma_short.push_back(sum_short / Decimal(static_cast<int64_t>(short_period)));
         }
         
         if (i >= long_period - 1) {
@@ -72,7 +72,7 @@ int main() {
             for (int j = 0; j < long_period; ++j) {
                 sum_long += historical_prices[i - j];
             }
-            sma_long.push_back(sum_long / Decimal(long_period));
+            sma_long.push_back(sum_long / Decimal(static_cast<int64_t>(long_period)));
         }
         
         // Trading logic: Buy when short MA crosses above long MA, sell when below
