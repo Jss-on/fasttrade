@@ -10,6 +10,7 @@ namespace fasttrade::core {
 TradingCore::TradingCore()
     : order_book_manager_(std::make_unique<OrderBookManager>()),
       clock_(std::make_unique<Clock>(ClockMode::REALTIME)),
+      market_data_manager_(std::make_unique<MarketDataManager>()),
       running_(false),
       daily_pnl_(utils::Decimal::zero()),
       total_pnl_(utils::Decimal::zero()) {
@@ -22,6 +23,7 @@ TradingCore::~TradingCore() {
 TradingCore::TradingCore(TradingCore&& other) noexcept
     : order_book_manager_(std::move(other.order_book_manager_)),
       clock_(std::move(other.clock_)),
+      market_data_manager_(std::move(other.market_data_manager_)),
       active_orders_(std::move(other.active_orders_)),
       positions_(std::move(other.positions_)),
       balances_(std::move(other.balances_)),
@@ -42,6 +44,7 @@ TradingCore& TradingCore::operator=(TradingCore&& other) noexcept {
         
         order_book_manager_ = std::move(other.order_book_manager_);
         clock_ = std::move(other.clock_);
+        market_data_manager_ = std::move(other.market_data_manager_);
         active_orders_ = std::move(other.active_orders_);
         positions_ = std::move(other.positions_);
         balances_ = std::move(other.balances_);
@@ -62,6 +65,7 @@ TradingCore& TradingCore::operator=(TradingCore&& other) noexcept {
 void TradingCore::initialize(ClockMode clock_mode) {
     clock_ = std::make_unique<Clock>(clock_mode);
     order_book_manager_ = std::make_unique<OrderBookManager>();
+    market_data_manager_ = std::make_unique<MarketDataManager>();
     
     // Initialize default risk limits if not set
     if (risk_limits_.max_position_size.is_zero()) {
@@ -230,14 +234,91 @@ OrderBook& TradingCore::get_order_book(const std::string& symbol) {
 }
 
 void TradingCore::subscribe_market_data(const std::string& symbol) {
-    // In a real implementation, this would establish market data connections
-    // For now, we just ensure the order book exists
+    // Ensure order book exists
     order_book_manager_->get_order_book(symbol);
+    
+    // Subscribe to market data if manager is initialized
+    if (market_data_manager_) {
+        market_data_manager_->subscribe_market_data(symbol);
+    }
 }
 
 void TradingCore::unsubscribe_market_data(const std::string& symbol) {
-    // In a real implementation, this would close market data connections
+    if (market_data_manager_) {
+        market_data_manager_->unsubscribe_market_data(symbol);
+    }
+    // this would close market data connections
     order_book_manager_->remove_order_book(symbol);
+}
+
+void TradingCore::subscribe_market_data(const std::string& symbol, const std::vector<MarketDataManager::Exchange>& exchanges) {
+    // Ensure order book exists
+    order_book_manager_->get_order_book(symbol);
+    
+    // Subscribe to market data on specific exchanges
+    if (market_data_manager_) {
+        for (auto exchange : exchanges) {
+            market_data_manager_->subscribe_market_data(symbol, exchange);
+        }
+    }
+}
+
+bool TradingCore::initialize_market_data(const std::vector<MarketDataManager::Exchange>& exchanges) {
+    if (!market_data_manager_) {
+        market_data_manager_ = std::make_unique<MarketDataManager>();
+    }
+    
+    // Set up callbacks for market data events
+    market_data_manager_->set_market_tick_callback(
+        [this](const MarketTick& tick, MarketDataManager::Exchange exchange) {
+            // Update order book with market tick data
+            auto& order_book = order_book_manager_->get_order_book(tick.symbol);
+            if (tick.is_bid) {
+                order_book.update_bid(tick.price, tick.quantity, tick.timestamp);
+            } else {
+                order_book.update_ask(tick.price, tick.quantity, tick.timestamp);
+            }
+            
+            // Notify callbacks if set
+            if (callbacks_.on_market_data) {
+                std::lock_guard<std::mutex> lock(event_mutex_);
+                event_queue_.push([this, tick, exchange]() {
+                    callbacks_.on_market_data(tick.symbol, tick.price, tick.quantity, tick.is_bid);
+                });
+            }
+        }
+    );
+    
+    market_data_manager_->set_trade_tick_callback(
+        [this](const TradeTick& tick, MarketDataManager::Exchange exchange) {
+            // Handle trade tick data
+            if (callbacks_.on_trade) {
+                std::lock_guard<std::mutex> lock(event_mutex_);
+                event_queue_.push([this, tick, exchange]() {
+                    callbacks_.on_trade(tick.symbol, tick.price, tick.quantity, tick.side == "buy");
+                });
+            }
+        }
+    );
+    
+    market_data_manager_->set_error_callback(
+        [this](const std::string& error, MarketDataManager::Exchange exchange) {
+            std::cerr << "Market data error on exchange " << static_cast<int>(exchange) << ": " << error << std::endl;
+        }
+    );
+    
+    return market_data_manager_->initialize(exchanges);
+}
+
+bool TradingCore::is_market_data_connected() const {
+    return market_data_manager_ && market_data_manager_->is_connected();
+}
+
+std::vector<std::string> TradingCore::get_subscribed_symbols() const {
+    if (market_data_manager_) {
+        return market_data_manager_->get_subscribed_symbols();
+    }
+    return {};
 }
 
 Position TradingCore::get_position(const std::string& symbol) const {

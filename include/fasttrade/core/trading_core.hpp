@@ -3,6 +3,7 @@
 #include "order_book.hpp"
 #include "limit_order.hpp"
 #include "clock.hpp"
+#include "market_data_manager.hpp"
 #include "../utils/decimal.hpp"
 #include <string>
 #include <map>
@@ -93,6 +94,8 @@ struct TradingCallbacks {
     std::function<void(const std::string&, const std::string&)> on_error;
     std::function<void(const Position&)> on_position_update;
     std::function<void(const Balance&)> on_balance_update;
+    std::function<void(const std::string&, const utils::Decimal&, const utils::Decimal&, bool)> on_market_data;
+    std::function<void(const std::string&, const utils::Decimal&, const utils::Decimal&, bool)> on_trade;
 };
 
 /**
@@ -107,6 +110,7 @@ private:
     // Core components
     std::unique_ptr<OrderBookManager> order_book_manager_;
     std::unique_ptr<Clock> clock_;
+    std::unique_ptr<MarketDataManager> market_data_manager_;
     
     // State management
     std::map<std::string, std::unique_ptr<LimitOrder>> active_orders_;
@@ -227,12 +231,38 @@ public:
      * @param symbol Trading symbol
      */
     void subscribe_market_data(const std::string& symbol);
+    
+    /**
+     * @brief Subscribe to market data for a symbol on specific exchanges
+     * @param symbol Trading symbol
+     * @param exchanges List of exchanges to subscribe to
+     */
+    void subscribe_market_data(const std::string& symbol, const std::vector<MarketDataManager::Exchange>& exchanges);
 
     /**
      * @brief Unsubscribe from market data for a symbol
      * @param symbol Trading symbol
      */
     void unsubscribe_market_data(const std::string& symbol);
+    
+    /**
+     * @brief Initialize market data connections
+     * @param exchanges List of exchanges to connect to
+     * @return True if initialization was successful
+     */
+    bool initialize_market_data(const std::vector<MarketDataManager::Exchange>& exchanges);
+    
+    /**
+     * @brief Check if market data is connected
+     * @return True if at least one exchange is connected
+     */
+    bool is_market_data_connected() const;
+    
+    /**
+     * @brief Get list of subscribed symbols
+     * @return Vector of subscribed symbols
+     */
+    std::vector<std::string> get_subscribed_symbols() const;
 
     // Portfolio Management
     /**

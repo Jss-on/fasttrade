@@ -12,10 +12,9 @@ option(BUILD_EXAMPLES "Build examples" ON)
 
 # Find required packages
 find_package(Threads REQUIRED)
-
-# Try to find nlohmann_json
-find_package(nlohmann_json REQUIRED)
-
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
+find_package(OpenSSL REQUIRED)
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/include)
@@ -27,6 +26,8 @@ set(FASTTRADE_SOURCES
     src/core/trading_core.cpp
     src/core/limit_order.cpp
     src/core/clock.cpp
+    src/core/market_data_manager.cpp
+    src/core/websocket_connection.cpp
     src/utils/decimal.cpp
 )
 
@@ -35,6 +36,8 @@ set(FASTTRADE_HEADERS
     include/fasttrade/core/trading_core.hpp
     include/fasttrade/core/limit_order.hpp
     include/fasttrade/core/clock.hpp
+    include/fasttrade/core/market_data_manager.hpp
+    include/fasttrade/core/websocket_connection.hpp
     include/fasttrade/utils/decimal.hpp
     include/fasttrade/fasttrade.hpp
 )
@@ -45,7 +48,13 @@ target_include_directories(fasttrade PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(fasttrade Threads::Threads nlohmann_json::nlohmann_json)
+target_link_libraries(fasttrade 
+    Threads::Threads 
+    nlohmann_json::nlohmann_json 
+    Boost::system
+    OpenSSL::SSL
+    OpenSSL::Crypto
+)
 
 # Compiler flags for optimization
 target_compile_options(fasttrade PRIVATE
@@ -55,12 +64,10 @@ target_compile_options(fasttrade PRIVATE
 
 # Python bindings
 if(BUILD_PYTHON_BINDINGS)
-    find_package(pybind11 QUIET)
-    if(pybind11_FOUND)
-        pybind11_add_module(pyfasttrade src/python/bindings.cpp)
-        target_link_libraries(pyfasttrade PRIVATE fasttrade)
-        target_compile_definitions(pyfasttrade PRIVATE VERSION_INFO=${PROJECT_VERSION})
-    endif()
+    find_package(pybind11 CONFIG REQUIRED)
+    pybind11_add_module(pyfasttrade src/python/bindings.cpp)
+    target_link_libraries(pyfasttrade PRIVATE fasttrade)
+    target_compile_definitions(pyfasttrade PRIVATE VERSION_INFO=${PROJECT_VERSION})
 endif()
 
 # Examples

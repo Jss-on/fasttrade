@@ -1,0 +1,10 @@
+{
+  "name": "fasttrade",
+  "version": "1.0.0",
+  "description": "Fast trading library",
+  "dependencies": [
+    "boost-system",
+    "boost-beast",
+    "nlohmann-json"
+  ]
+}
